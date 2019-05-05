@@ -1,9 +1,8 @@
+pragma solidity ^0.4.26;
 
-pragma solidity ^0.4.16;
+import "./TokenRecipient.sol";
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
-
-contract TokenERC20 {
+contract KantiCoin {
     // Public variables of the token
     string public name;
     string public symbol;
@@ -29,7 +28,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol

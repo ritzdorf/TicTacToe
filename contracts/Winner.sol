@@ -1,136 +1,6 @@
 pragma solidity ^0.4.24;
  
-
-contract ERC20Interface {
-
-   /// @return total amount of tokens
-   function totalSupply() public constant returns (uint256 );
-   /// @param _owner The address from which the balance will be retrieved
-   /// @return The balance
-   function balanceOf(address _owner) public constant returns (uint256);
-
-   /// @notice send `_value` token to `_to` from `msg.sender`
-   /// @param _to The address of the recipient
-   /// @param _value The amount of token to be transferred
-   /// @return Whether the transfer was successful or not
-   function transfer(address _to, uint256 _value) public returns (bool success);
-
-   /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-   /// @param _from The address of the sender
-   /// @param _to The address of the recipient
-   /// @param _value The amount of token to be transferred
-   /// @return Whether the transfer was successful or not
-   function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-   /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-   /// @param _spender The address of the account able to transfer the tokens
-   /// @param _value The amount of wei to be approved for transfer
-   /// @return Whether the approval was successful or not
-   function approve(address _spender, uint256 _value) public returns (bool success);
-
-   /// @param _owner The address of the account owning tokens
-   /// @param _spender The address of the account able to transfer the tokens
-   /// @return Amount of remaining tokens allowed to spent
-   function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-
-   event Transfer(address indexed _from, address indexed _to, uint256 _value);
-   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-}
-
-
-
-
-contract Fields {
-   //if someone wants to choose a field, we need to make sure that it isn't occupied yet
-   // i describes the row, k the column
-
-   uint8 [3][3] internal fields;
-   bool internal endGame = true; // true means game has already ended (default Value is true)
-   string internal winnerOfGame = "";
-
-   function fieldChange (uint8 i, uint8 k, uint8 value) internal { //not sure if I used enum correctly here
-       fields[i-1][k-1] = value;
-   } //this function is called when sb. wants to choose a field
-
-   function getFieldValue(uint8 i, uint8 k) view public returns (uint8) {
-       return fields[i-1][k-1];
-   }
-
-   function getAllFieldValues() view public returns (uint256) {
-       uint8 i;
-       uint8 k;
-       uint256 result=0;
-       uint256 position=0;
-       for (i=0; i<=2; i++) {
-           for (k=0; k<=2; k++) {
-               result = result + (fields[i][k] * (10**position));
-               position++;
-           }
-       }
-
-       return result;
-   }
-
-
-}
-
-contract User is Fields {
-
-   ERC20Interface internal KantiToken;
-
-   address internal PlayerA;
-   address internal PlayerB;
-   mapping (address => uint8) internal playerSymbol;
-
-   uint8 internal playerDefined = 0;
-
-   function DefineUsers() public {
-       require(endGame == true);
-       require(PlayerB == 0x0000000000000000000000000000000000000000);
-		
-       if (PlayerA == 0x0000000000000000000000000000000000000000) {
-           PlayerA = msg.sender;
-           playerSymbol[PlayerA] = 1;
-           playerDefined = 1;
-			// check if tranfer allowed by sender
-			if(!(KantiToken.allowance(msg.sender, this) > 0)) revert('Transfer not allowed!');
-           //check if the transaction was received
-			if(!KantiToken.transferFrom(msg.sender, this, uint256(100000000000000000))) revert('Transfer aborded!');
-           // init fields
-           for (uint8 i=0; i<=2; i++) {
-               for (uint8 k=0; k<=2; k++) {
-                   fields[i][k] = 0;
-               }
-           }
-       }
-       else if (PlayerA != msg.sender) {
-           PlayerB = msg.sender;
-           playerSymbol[PlayerB] = 2;
-           playerDefined = 2;
-           endGame = false;
-			// check if tranfer allowed by sender
-			if(!(KantiToken.allowance(msg.sender, this) > 0)) revert('Transfer not allowed!');
-			//check if the transaction was received
-           if(!KantiToken.transferFrom(msg.sender, this, uint256(100000000000000000))) revert('Transfer aborded!');
-       }
-		// revert will abord the function
-
-   }
-
-//needs a lock, so functions can't be called while game is still going on
-
-   function getPlayerA() view public returns (address) {
-       return PlayerA;
-   }
-
-   function getPlayerB() view public returns (address) {
-       return PlayerB;
-   }
-
-}
-
-
+import "./User.sol";
 
 /*   k=1 k=2 k=3
     ___________  Plan
@@ -218,7 +88,7 @@ contract Winner is User {
 
 
 
-contract playGame is Winner {
+contract PlayGame is Winner {
 
    uint8 internal whichPlayer = 1;
    uint8 internal moveCount = 0;
